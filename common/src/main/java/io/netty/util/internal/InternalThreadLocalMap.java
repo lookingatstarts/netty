@@ -39,15 +39,15 @@ import java.util.WeakHashMap;
 public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(InternalThreadLocalMap.class);
-
+    // list初始值为8
     private static final int DEFAULT_ARRAY_LIST_INITIAL_CAPACITY = 8;
     private static final int STRING_BUILDER_INITIAL_SIZE;
     private static final int STRING_BUILDER_MAX_SIZE;
-
+    // 占位
     public static final Object UNSET = new Object();
-
+    // 标识符号
     private BitSet cleanerFlags;
-
+    // 初始化
     static {
         STRING_BUILDER_INITIAL_SIZE =
                 SystemPropertyUtil.getInt("io.netty.threadLocalMap.stringBuilder.initialSize", 1024);
@@ -57,11 +57,18 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         logger.debug("-Dio.netty.threadLocalMap.stringBuilder.maxSize: {}", STRING_BUILDER_MAX_SIZE);
     }
 
+    /**
+     * 获取InternalThreadLocalMap
+     * 1、FastThreadLocalThread内置了InternalThreadLocalMap
+     * 2、普通thread使用普通ThreadLocal保存InternalThreadLocalMap
+     */
     public static InternalThreadLocalMap getIfSet() {
         Thread thread = Thread.currentThread();
+        // 从线程中取
         if (thread instanceof FastThreadLocalThread) {
             return ((FastThreadLocalThread) thread).threadLocalMap();
         }
+        // 从threadLocal中取
         return slowThreadLocalMap.get();
     }
 
@@ -82,6 +89,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         return threadLocalMap;
     }
 
+    // 没有则设置一个InternalTheadLocalMap
     private static InternalThreadLocalMap slowGet() {
         ThreadLocal<InternalThreadLocalMap> slowThreadLocalMap = UnpaddedInternalThreadLocalMap.slowThreadLocalMap;
         InternalThreadLocalMap ret = slowThreadLocalMap.get();
@@ -101,6 +109,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         }
     }
 
+    // ThreadLocal<InternalThreadLocalMap> 移除
     public static void destroy() {
         slowThreadLocalMap.remove();
     }
@@ -118,6 +127,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         return nextIndex.get() - 1;
     }
 
+    // cache行填充
     // Cache line padding (must be public)
     // With CompressedOops enabled, an instance of this class should occupy at least 128 bytes.
     public long rp1, rp2, rp3, rp4, rp5, rp6, rp7, rp8, rp9;
@@ -126,15 +136,20 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         super(newIndexedVariableTable());
     }
 
+    /**
+     * 创建indexVariable数组
+     */
     private static Object[] newIndexedVariableTable() {
         Object[] array = new Object[32];
         Arrays.fill(array, UNSET);
         return array;
     }
 
+    /**
+     * size
+     */
     public int size() {
         int count = 0;
-
         if (futureListenerStackDepth != 0) {
             count ++;
         }
@@ -168,13 +183,11 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         if (arrayList != null) {
             count ++;
         }
-
         for (Object o: indexedVariables) {
             if (o != UNSET) {
                 count ++;
             }
         }
-
         // We should subtract 1 from the count because the first element in 'indexedVariables' is reserved
         // by 'FastThreadLocal' to keep the list of 'FastThreadLocal's to remove on 'FastThreadLocal.removeAll()'.
         return count - 1;
@@ -304,6 +317,9 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         }
     }
 
+    /**
+     * 扩容list
+     */
     private void expandIndexedVariableTableAndSet(int index, Object value) {
         Object[] oldArray = indexedVariables;
         final int oldCapacity = oldArray.length;
@@ -314,13 +330,15 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
         newCapacity |= newCapacity >>>  8;
         newCapacity |= newCapacity >>> 16;
         newCapacity ++;
-
         Object[] newArray = Arrays.copyOf(oldArray, newCapacity);
         Arrays.fill(newArray, oldCapacity, newArray.length, UNSET);
         newArray[index] = value;
         indexedVariables = newArray;
     }
 
+    /**
+     * 移除indexedVariables指定下标的元素
+     */
     public Object removeIndexedVariable(int index) {
         Object[] lookup = indexedVariables;
         if (index < lookup.length) {

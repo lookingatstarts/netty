@@ -20,6 +20,9 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * 默认实现
+ */
 public class DefaultEventLoop extends SingleThreadEventLoop {
 
     public DefaultEventLoop() {
@@ -48,13 +51,13 @@ public class DefaultEventLoop extends SingleThreadEventLoop {
 
     @Override
     protected void run() {
+        // 自旋获取任务处理
         for (;;) {
             Runnable task = takeTask();
             if (task != null) {
                 task.run();
                 updateLastExecutionTime();
             }
-
             if (confirmShutdown()) {
                 break;
             }

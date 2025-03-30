@@ -32,6 +32,7 @@ public final class DefaultPriorityQueue<T extends PriorityQueueNode> extends Abs
                                                                      implements PriorityQueue<T> {
     private static final PriorityQueueNode[] EMPTY_ARRAY = new PriorityQueueNode[0];
     private final Comparator<T> comparator;
+    // 数组存储
     private T[] queue;
     private int size;
 

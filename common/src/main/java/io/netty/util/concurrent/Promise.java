@@ -16,11 +16,15 @@
 package io.netty.util.concurrent;
 
 /**
+ * setSuccess和setFailure只有一个能成功
+ * Future中只有getter方法，没有setter结果
+ * Promise增加setter方法
  * Special {@link Future} which is writable.
  */
 public interface Promise<V> extends Future<V> {
 
     /**
+     * 支持设置结果
      * Marks this future as a success and notifies all
      * listeners.
      *
@@ -29,6 +33,7 @@ public interface Promise<V> extends Future<V> {
     Promise<V> setSuccess(V result);
 
     /**
+     * 尝试设置
      * Marks this future as a success and notifies all
      * listeners.
      *
@@ -57,6 +62,7 @@ public interface Promise<V> extends Future<V> {
     boolean tryFailure(Throwable cause);
 
     /**
+     * 设置取消
      * Make this future impossible to cancel.
      *
      * @return {@code true} if and only if successfully marked this future as uncancellable or it is already done

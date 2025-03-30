@@ -24,6 +24,7 @@ class PromiseTask<V> extends DefaultPromise<V> implements RunnableFuture<V> {
         return new RunnableAdapter<T>(runnable, result);
     }
 
+    // 适配器
     private static final class RunnableAdapter<T> implements Callable<T> {
         final Runnable task;
         final T result;
@@ -47,6 +48,9 @@ class PromiseTask<V> extends DefaultPromise<V> implements RunnableFuture<V> {
 
     protected final Callable<V> task;
 
+    /**
+     * @param executor 执行器
+     */
     PromiseTask(EventExecutor executor, Runnable runnable, V result) {
         this(executor, toCallable(runnable, result));
     }

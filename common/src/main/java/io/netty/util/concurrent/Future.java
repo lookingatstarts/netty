@@ -20,23 +20,31 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
+ * java的中Future存在的问题
+ * 1、isDone表示完成，可能为：正常 异常 用户取消，有些场景下，我们可能需要细分这三种结果
+ * 2、对于一个异步操作，我们可能需要在操作完成后进行一些操作
+ *
+ * netty的Future扩展了这两点
  * The result of an asynchronous operation.
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 public interface Future<V> extends java.util.concurrent.Future<V> {
 
     /**
+     * 正常执行
      * Returns {@code true} if and only if the I/O operation was completed
      * successfully.
      */
     boolean isSuccess();
 
     /**
+     * 取消
      * returns {@code true} if and only if the operation can be cancelled via {@link #cancel(boolean)}.
      */
     boolean isCancellable();
 
     /**
+     * 如果执行异常，则返回异常
      * Returns the cause of the failed I/O operation if the I/O operation has
      * failed.
      *
@@ -47,10 +55,13 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
     Throwable cause();
 
     /**
+     * 通过添加监听器，在任务完成后，触发一些操作
      * Adds the specified listener to this future.  The
      * specified listener is notified when this future is
-     * {@linkplain #isDone() done}.  If this future is already
-     * completed, the specified listener is notified immediately.
+     * {@linkplain #isDone() done}.
+     * 当future完成时通知listener
+     * If this future is already completed, the specified listener is notified immediately.
+     * 如果future已完成，会立即通知
      */
     Future<V> addListener(GenericFutureListener<? extends Future<? super V>> listener);
 
@@ -81,6 +92,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
     Future<V> removeListeners(GenericFutureListener<? extends Future<? super V>>... listeners);
 
     /**
+     * 阻塞获取结果，如果异步执行操作，则会抛出错误异常
      * Waits for this future until it is done, and rethrows the cause of the failure if this future
      * failed.
      */
@@ -94,7 +106,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
 
     /**
      * Waits for this future to be completed.
-     *
+     * 阻塞指定异步操作完成
      * @throws InterruptedException
      *         if the current thread was interrupted
      */
@@ -152,6 +164,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
     boolean awaitUninterruptibly(long timeoutMillis);
 
     /**
+     * 非阻塞方法，立即获取结果
      * Return the result without blocking. If the future is not done yet this will return {@code null}.
      *
      * As it is possible that a {@code null} value is used to mark the future as successful you also need to check

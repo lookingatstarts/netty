@@ -37,7 +37,6 @@ class UnpaddedInternalThreadLocalMap {
 
     /** Used by {@link FastThreadLocal} */
     Object[] indexedVariables;
-
     // Core thread-locals
     int futureListenerStackDepth;
     int localChannelReaderStackDepth;
@@ -46,12 +45,10 @@ class UnpaddedInternalThreadLocalMap {
     ThreadLocalRandom random;
     Map<Class<?>, TypeParameterMatcher> typeParameterMatcherGetCache;
     Map<Class<?>, Map<String, TypeParameterMatcher>> typeParameterMatcherFindCache;
-
     // String-related thread-locals
     StringBuilder stringBuilder;
     Map<Charset, CharsetEncoder> charsetEncoderCache;
     Map<Charset, CharsetDecoder> charsetDecoderCache;
-
     // ArrayList-related thread-locals
     ArrayList<Object> arrayList;
 

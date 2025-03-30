@@ -17,15 +17,20 @@ package io.netty.util.concurrent;
 
 import java.util.Arrays;
 
+/**
+ * Future listener管理器
+ */
 final class DefaultFutureListeners {
 
     private GenericFutureListener<? extends Future<?>>[] listeners;
     private int size;
+    // 带进度的监听器
     private int progressiveSize; // the number of progressive listeners
 
     @SuppressWarnings("unchecked")
     DefaultFutureListeners(
-            GenericFutureListener<? extends Future<?>> first, GenericFutureListener<? extends Future<?>> second) {
+            GenericFutureListener<? extends Future<?>> first,
+            GenericFutureListener<? extends Future<?>> second) {
         listeners = new GenericFutureListener[2];
         listeners[0] = first;
         listeners[1] = second;
@@ -41,12 +46,12 @@ final class DefaultFutureListeners {
     public void add(GenericFutureListener<? extends Future<?>> l) {
         GenericFutureListener<? extends Future<?>>[] listeners = this.listeners;
         final int size = this.size;
+        // 2倍扩容
         if (size == listeners.length) {
             this.listeners = listeners = Arrays.copyOf(listeners, size << 1);
         }
         listeners[size] = l;
         this.size = size + 1;
-
         if (l instanceof GenericProgressiveFutureListener) {
             progressiveSize ++;
         }
@@ -63,7 +68,6 @@ final class DefaultFutureListeners {
                 }
                 listeners[-- size] = null;
                 this.size = size;
-
                 if (l instanceof GenericProgressiveFutureListener) {
                     progressiveSize --;
                 }

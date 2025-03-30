@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 适合轻量级任务
  * Single-thread singleton {@link EventExecutor}.  It starts the thread automatically and stops it when there is no
  * task pending in the task queue for 1 second.  Please note it is not scalable to schedule large number of tasks to
  * this executor; use a dedicated executor.
@@ -209,8 +210,8 @@ public final class GlobalEventExecutor extends AbstractScheduledEventExecutor im
         if (task == null) {
             throw new NullPointerException("task");
         }
-
         addTask(task);
+        // 启动线程
         if (!inEventLoop()) {
             startThread();
         }
@@ -240,9 +241,12 @@ public final class GlobalEventExecutor extends AbstractScheduledEventExecutor im
         }
     }
 
+    // thread调用TaskRunner
     final class TaskRunner implements Runnable {
+
         @Override
         public void run() {
+            // 循环
             for (;;) {
                 Runnable task = takeTask();
                 if (task != null) {

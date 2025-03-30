@@ -55,6 +55,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(SingleThreadEventExecutor.class);
 
+    // 当线程池状态
     private static final int ST_NOT_STARTED = 1;
     private static final int ST_STARTED = 2;
     private static final int ST_SHUTTING_DOWN = 3;
@@ -76,6 +77,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private static final AtomicIntegerFieldUpdater<SingleThreadEventExecutor> STATE_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(SingleThreadEventExecutor.class, "state");
+
     private static final AtomicReferenceFieldUpdater<SingleThreadEventExecutor, ThreadProperties> PROPERTIES_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(
                     SingleThreadEventExecutor.class, ThreadProperties.class, "threadProperties");
@@ -83,6 +85,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private final Queue<Runnable> taskQueue;
 
     private volatile Thread thread;
+    /**
+     * 线程属性
+     */
     @SuppressWarnings("unused")
     private volatile ThreadProperties threadProperties;
     private final Executor executor;
@@ -96,6 +101,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private long lastExecutionTime;
 
+    /**
+     * 线程池状态
+     */
     @SuppressWarnings({ "FieldMayBeFinal", "unused" })
     private volatile int state = ST_NOT_STARTED;
 
@@ -236,11 +244,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * @return {@code null} if the executor thread has been interrupted or waken up.
      */
     protected Runnable takeTask() {
+        // 非外部线程执行
         assert inEventLoop();
+        // 必须是阻塞队列
         if (!(taskQueue instanceof BlockingQueue)) {
             throw new UnsupportedOperationException();
         }
-
         BlockingQueue<Runnable> taskQueue = (BlockingQueue<Runnable>) this.taskQueue;
         for (;;) {
             ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
@@ -274,7 +283,6 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                     fetchFromScheduledTaskQueue();
                     task = taskQueue.poll();
                 }
-
                 if (task != null) {
                     return task;
                 }
@@ -690,11 +698,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (!isShuttingDown()) {
             return false;
         }
-
         if (!inEventLoop()) {
             throw new IllegalStateException("must be invoked from an event loop");
         }
-
         cancelScheduledTasks();
 
         if (gracefulShutdownStartTime == 0) {
@@ -968,7 +974,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         });
     }
 
+    /**
+     * 线程属性
+     */
     private static final class DefaultThreadProperties implements ThreadProperties {
+
         private final Thread t;
 
         DefaultThreadProperties(Thread t) {

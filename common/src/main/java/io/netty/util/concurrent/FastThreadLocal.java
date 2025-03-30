@@ -43,6 +43,7 @@ import java.util.Set;
  */
 public class FastThreadLocal<V> {
 
+    // InternalThreadLocalMap 批量移除的下标(Set保存FastThreadLocal的引用)
     private static final int variablesToRemoveIndex = InternalThreadLocalMap.nextVariableIndex();
 
     /**
@@ -55,19 +56,18 @@ public class FastThreadLocal<V> {
         if (threadLocalMap == null) {
             return;
         }
-
         try {
             Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
             if (v != null && v != InternalThreadLocalMap.UNSET) {
                 @SuppressWarnings("unchecked")
                 Set<FastThreadLocal<?>> variablesToRemove = (Set<FastThreadLocal<?>>) v;
-                FastThreadLocal<?>[] variablesToRemoveArray =
-                        variablesToRemove.toArray(new FastThreadLocal[0]);
+                FastThreadLocal<?>[] variablesToRemoveArray = variablesToRemove.toArray(new FastThreadLocal[0]);
                 for (FastThreadLocal<?> tlv: variablesToRemoveArray) {
                     tlv.remove(threadLocalMap);
                 }
             }
         } finally {
+            //
             InternalThreadLocalMap.remove();
         }
     }
@@ -94,6 +94,9 @@ public class FastThreadLocal<V> {
         InternalThreadLocalMap.destroy();
     }
 
+    /**
+     * 用一个Set保存FastThreadLocal
+     */
     @SuppressWarnings("unchecked")
     private static void addToVariablesToRemove(InternalThreadLocalMap threadLocalMap, FastThreadLocal<?> variable) {
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
@@ -104,24 +107,28 @@ public class FastThreadLocal<V> {
         } else {
             variablesToRemove = (Set<FastThreadLocal<?>>) v;
         }
-
+        // 管理FastThreadLocal
         variablesToRemove.add(variable);
     }
 
+    /**
+     * 从InternalThreadLocalMap移除FastThreadLocal
+     */
     private static void removeFromVariablesToRemove(
             InternalThreadLocalMap threadLocalMap, FastThreadLocal<?> variable) {
-
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
-
         if (v == InternalThreadLocalMap.UNSET || v == null) {
             return;
         }
-
         @SuppressWarnings("unchecked")
         Set<FastThreadLocal<?>> variablesToRemove = (Set<FastThreadLocal<?>>) v;
+        // 移除FastThreadLocal
         variablesToRemove.remove(variable);
     }
 
+    /**
+     * 值存储在InternalThreadLocalMap#variables数组的下标
+     */
     private final int index;
 
     public FastThreadLocal() {
@@ -135,14 +142,16 @@ public class FastThreadLocal<V> {
     public final V get() {
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.get();
         Object v = threadLocalMap.indexedVariable(index);
+        // 如果不为占位对象，返回
         if (v != InternalThreadLocalMap.UNSET) {
             return (V) v;
         }
-
         return initialize(threadLocalMap);
     }
 
     /**
+     * thread -> internalThreadLocalMap
+     *
      * Returns the current value for the current thread if it exists, {@code null} otherwise.
      */
     @SuppressWarnings("unchecked")
@@ -167,18 +176,21 @@ public class FastThreadLocal<V> {
         if (v != InternalThreadLocalMap.UNSET) {
             return (V) v;
         }
-
         return initialize(threadLocalMap);
     }
 
+    /**
+     * 懒加载
+     */
     private V initialize(InternalThreadLocalMap threadLocalMap) {
         V v = null;
         try {
+            // 获取初始值
             v = initialValue();
         } catch (Exception e) {
             PlatformDependent.throwException(e);
         }
-
+        // 设置InternalThreadLocalMap中
         threadLocalMap.setIndexedVariable(index, v);
         addToVariablesToRemove(threadLocalMap, this);
         return v;
@@ -247,10 +259,9 @@ public class FastThreadLocal<V> {
         if (threadLocalMap == null) {
             return;
         }
-
+        // fastThreadLocal的值
         Object v = threadLocalMap.removeIndexedVariable(index);
         removeFromVariablesToRemove(threadLocalMap, this);
-
         if (v != InternalThreadLocalMap.UNSET) {
             try {
                 onRemoval((V) v);

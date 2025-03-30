@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DefaultThreadFactory implements ThreadFactory {
 
     private static final AtomicInteger poolId = new AtomicInteger();
-
     private final AtomicInteger nextId = new AtomicInteger();
     private final String prefix;
     private final boolean daemon;

@@ -25,6 +25,9 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * 定时任务
+ */
 @SuppressWarnings("ComparableImplementedButEqualsNotOverridden")
 final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFuture<V>, PriorityQueueNode {
     private static final AtomicLong nextTaskId = new AtomicLong();
@@ -40,9 +43,15 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return deadlineNanos < 0 ? Long.MAX_VALUE : deadlineNanos;
     }
 
+    // 任务ID
     private final long id = nextTaskId.getAndIncrement();
     private long deadlineNanos;
     /* 0 - no repeat, >0 - repeat at fixed rate, <0 - repeat with fixed delay */
+    /**
+     * 0： 不重复执行
+     * >0  固定速率执行
+     * <0  固定延迟执行
+     */
     private final long periodNanos;
 
     private int queueIndex = INDEX_NOT_IN_QUEUE;
@@ -50,7 +59,6 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     ScheduledFutureTask(
             AbstractScheduledEventExecutor executor,
             Runnable runnable, V result, long nanoTime) {
-
         this(executor, toCallable(runnable, result), nanoTime);
     }
 
@@ -92,17 +100,20 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return Math.max(0, deadlineNanos() - (currentTimeNanos - START_TIME));
     }
 
+    // 任务执行的延迟时间
     @Override
     public long getDelay(TimeUnit unit) {
         return unit.convert(delayNanos(), TimeUnit.NANOSECONDS);
     }
 
+    /**
+     * 比较任务优先级
+     */
     @Override
     public int compareTo(Delayed o) {
         if (this == o) {
             return 0;
         }
-
         ScheduledFutureTask<?> that = (ScheduledFutureTask<?>) o;
         long d = deadlineNanos() - that.deadlineNanos();
         if (d < 0) {
@@ -124,6 +135,7 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         try {
             if (periodNanos == 0) {
                 if (setUncancellableInternal()) {
+                    // 调用命令
                     V result = task.call();
                     setSuccessInternal(result);
                 }
@@ -175,7 +187,6 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     protected StringBuilder toStringBuilder() {
         StringBuilder buf = super.toStringBuilder();
         buf.setCharAt(buf.length() - 1, ',');
-
         return buf.append(" id: ")
                   .append(id)
                   .append(", deadline: ")

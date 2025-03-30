@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class CompleteFuture<V> extends AbstractFuture<V> {
 
+    // 事件线程池
     private final EventExecutor executor;
 
     /**
@@ -36,11 +37,15 @@ public abstract class CompleteFuture<V> extends AbstractFuture<V> {
 
     /**
      * Return the {@link EventExecutor} which is used by this {@link CompleteFuture}.
+     * 线程
      */
     protected EventExecutor executor() {
         return executor;
     }
 
+    /**
+     * CompleteFuture：标识任务已完成，添加listener立即通知
+     */
     @Override
     public Future<V> addListener(GenericFutureListener<? extends Future<? super V>> listener) {
         if (listener == null) {

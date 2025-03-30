@@ -38,6 +38,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 }
             };
 
+    // 定时任务优先队列
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue;
 
     protected AbstractScheduledEventExecutor() {

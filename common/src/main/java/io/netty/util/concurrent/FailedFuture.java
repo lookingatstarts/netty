@@ -18,6 +18,8 @@ package io.netty.util.concurrent;
 import io.netty.util.internal.PlatformDependent;
 
 /**
+ * 执行失败的Future
+ *
  * The {@link CompleteFuture} which is failed already.  It is
  * recommended to use {@link EventExecutor#newFailedFuture(Throwable)}
  * instead of calling the constructor of this future.
