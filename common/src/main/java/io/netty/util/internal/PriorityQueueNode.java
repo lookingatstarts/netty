@@ -16,7 +16,8 @@
 package io.netty.util.internal;
 
 /**
- * Provides methods for {@link DefaultPriorityQueue} to maintain internal state. These methods should generally not be
+ * 优先队列节点
+ * Provides methods for {@link DefaultPriorityQueue} to maintain(存储) internal state. These methods should generally not be
  * used outside the scope of {@link DefaultPriorityQueue}.
  */
 public interface PriorityQueueNode {

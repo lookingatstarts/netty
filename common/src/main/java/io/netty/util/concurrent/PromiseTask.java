@@ -70,14 +70,18 @@ class PromiseTask<V> extends DefaultPromise<V> implements RunnableFuture<V> {
         return this == obj;
     }
 
+    // 设置结果后，会
     @Override
     public void run() {
         try {
+            // 设置任务不可取消
             if (setUncancellableInternal()) {
                 V result = task.call();
+                // 设置为成功
                 setSuccessInternal(result);
             }
         } catch (Throwable e) {
+            // 设置为失败
             setFailureInternal(e);
         }
     }

@@ -201,11 +201,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * implementation that does not support blocking operations at all.
      */
     protected Queue<Runnable> newTaskQueue(int maxPendingTasks) {
-        return new LinkedBlockingQueue<Runnable>(maxPendingTasks);
+        return new LinkedBlockingQueue<>(maxPendingTasks);
     }
 
     /**
      * Interrupt the current running {@link Thread}.
+     * 中断线程
      */
     protected void interruptThread() {
         Thread currentThread = thread;
@@ -333,6 +334,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     /**
      * Add a task to the task queue, or throws a {@link RejectedExecutionException} if this instance was shutdown
      * before.
+     * 添加任务
      */
     protected void addTask(Runnable task) {
         if (task == null) {
@@ -507,6 +509,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    /**
+     * 是否为内部线程
+     */
     @Override
     public boolean inEventLoop(Thread thread) {
         return thread == this.thread;
@@ -762,14 +767,18 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    /**
+     * 提交任务
+     */
     @Override
     public void execute(Runnable task) {
         if (task == null) {
             throw new NullPointerException("task");
         }
-
         boolean inEventLoop = inEventLoop();
+        // 提交任务到任务队列
         addTask(task);
+        // 非内部线程
         if (!inEventLoop) {
             startThread();
             if (isShutdown()) {
@@ -788,7 +797,6 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 }
             }
         }
-
         if (!addTaskWakesUp && wakesUpForTask(task)) {
             wakeup(inEventLoop);
         }
@@ -821,6 +829,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return super.invokeAll(tasks, timeout, unit);
     }
 
+    // 只能外部线程调用
     private void throwIfInEventLoop(String method) {
         if (inEventLoop()) {
             throw new RejectedExecutionException("Calling " + method + " from within the EventLoop is not allowed");
@@ -862,6 +871,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
+     * 饱和策略
      * Offers the task to the associated {@link RejectedExecutionHandler}.
      *
      * @param task to reject.
@@ -874,8 +884,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private static final long SCHEDULE_PURGE_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 
+    /**
+     * 启动线程
+     */
     private void startThread() {
         if (state == ST_NOT_STARTED) {
+            // CAS
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
                 boolean success = false;
                 try {
@@ -908,6 +922,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return false;
     }
 
+    /**
+     * 启动线程
+     */
     private void doStartThread() {
         assert thread == null;
         executor.execute(new Runnable() {
@@ -917,10 +934,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 if (interrupted) {
                     thread.interrupt();
                 }
-
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    // 任务线程
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
@@ -933,7 +950,6 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                             break;
                         }
                     }
-
                     // Check if confirmShutdown() was called at the end of the loop.
                     if (success && gracefulShutdownStartTime == 0) {
                         if (logger.isErrorEnabled()) {

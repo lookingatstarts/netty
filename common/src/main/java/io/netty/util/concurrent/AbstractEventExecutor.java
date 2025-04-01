@@ -47,16 +47,19 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
         this.parent = parent;
     }
 
+    // 父EventExecutor，EventExecutorGroup负责管理EventExecutor
     @Override
     public EventExecutorGroup parent() {
         return parent;
     }
 
+    // 返回它自己
     @Override
     public EventExecutor next() {
         return this;
     }
 
+    // 是否为内部线程
     @Override
     public boolean inEventLoop() {
         return inEventLoop(Thread.currentThread());
