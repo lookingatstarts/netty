@@ -58,6 +58,9 @@ public final class DefaultEventExecutor extends SingleThreadEventExecutor {
         super(parent, executor, true, maxPendingTasks, rejectedExecutionHandler);
     }
 
+    /**
+     * 实现了SingleThreadEventExecutor的方法
+     */
     @Override
     protected void run() {
         for (;;) {

@@ -81,9 +81,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private static final AtomicReferenceFieldUpdater<SingleThreadEventExecutor, ThreadProperties> PROPERTIES_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(
                     SingleThreadEventExecutor.class, ThreadProperties.class, "threadProperties");
-
+    // 阻塞队列
     private final Queue<Runnable> taskQueue;
-
+    // 执行线程
     private volatile Thread thread;
     /**
      * 线程属性
@@ -92,13 +92,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private volatile ThreadProperties threadProperties;
     private final Executor executor;
     private volatile boolean interrupted;
-
     private final CountDownLatch threadLock = new CountDownLatch(1);
     private final Set<Runnable> shutdownHooks = new LinkedHashSet<Runnable>();
     private final boolean addTaskWakesUp;
+    // 阻塞队列最大容量
     private final int maxPendingTasks;
     private final RejectedExecutionHandler rejectedExecutionHandler;
-
+    // 上次执行时间
     private long lastExecutionTime;
 
     /**
@@ -170,6 +170,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         super(parent);
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
+        // 将EventExecutor放入到FastThreadLocal中
         this.executor = ThreadExecutorMap.apply(executor, this);
         taskQueue = newTaskQueue(this.maxPendingTasks);
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
@@ -201,7 +202,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * implementation that does not support blocking operations at all.
      */
     protected Queue<Runnable> newTaskQueue(int maxPendingTasks) {
-        return new LinkedBlockingQueue<>(maxPendingTasks);
+        return new LinkedBlockingQueue<Runnable>(maxPendingTasks);
     }
 
     /**
@@ -927,6 +928,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      */
     private void doStartThread() {
         assert thread == null;
+        // 提交到Executor中
         executor.execute(new Runnable() {
             @Override
             public void run() {

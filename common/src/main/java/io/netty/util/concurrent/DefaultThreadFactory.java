@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultThreadFactory implements ThreadFactory {
 
+    // 线程池ID，自增
     private static final AtomicInteger poolId = new AtomicInteger();
+    // 统一池下，线程ID，自增
     private final AtomicInteger nextId = new AtomicInteger();
     private final String prefix;
     private final boolean daemon;
@@ -66,7 +68,6 @@ public class DefaultThreadFactory implements ThreadFactory {
         if (poolType == null) {
             throw new NullPointerException("poolType");
         }
-
         String poolName = StringUtil.simpleClassName(poolType);
         switch (poolName.length()) {
             case 0:
@@ -87,10 +88,8 @@ public class DefaultThreadFactory implements ThreadFactory {
             throw new NullPointerException("poolName");
         }
         if (priority < Thread.MIN_PRIORITY || priority > Thread.MAX_PRIORITY) {
-            throw new IllegalArgumentException(
-                    "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
+            throw new IllegalArgumentException("priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
-
         prefix = poolName + '-' + poolId.incrementAndGet() + '-';
         this.daemon = daemon;
         this.priority = priority;
@@ -109,16 +108,15 @@ public class DefaultThreadFactory implements ThreadFactory {
             if (t.isDaemon() != daemon) {
                 t.setDaemon(daemon);
             }
-
             if (t.getPriority() != priority) {
                 t.setPriority(priority);
             }
         } catch (Exception ignored) {
-            // Doesn't matter even if failed to set.
         }
         return t;
     }
 
+    // 创建线程
     protected Thread newThread(Runnable r, String name) {
         return new FastThreadLocalThread(threadGroup, r, name);
     }
