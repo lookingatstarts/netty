@@ -110,7 +110,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private volatile long gracefulShutdownQuietPeriod;
     private volatile long gracefulShutdownTimeout;
     private long gracefulShutdownStartTime;
-
+    // EventExecutor线程池关闭时执行一些操作
     private final Promise<?> terminationFuture = new DefaultPromise<Void>(GlobalEventExecutor.INSTANCE);
 
     /**
@@ -939,12 +939,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
-                    // 任务线程
+                    // 任务线程，自旋获取任务
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
                     logger.warn("Unexpected exception from an event executor: ", t);
                 } finally {
+                    // 自旋
                     for (;;) {
                         int oldState = state;
                         if (oldState >= ST_SHUTTING_DOWN || STATE_UPDATER.compareAndSet(
@@ -953,6 +954,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                         }
                     }
                     // Check if confirmShutdown() was called at the end of the loop.
+                    // success为true则为正常关闭
                     if (success && gracefulShutdownStartTime == 0) {
                         if (logger.isErrorEnabled()) {
                             logger.error("Buggy " + EventExecutor.class.getSimpleName() + " implementation; " +
